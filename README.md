@@ -234,31 +234,59 @@ CareerPilot-AI/
 ├── backend/
 │   ├── app/
 │   │   ├── agents/
-│   │   ├── routes/
+│   │   ├── api/
+│   │   ├── auth/
+│   │   ├── core/
+│   │   ├── db/
+│   │   ├── formatters/
+│   │   ├── models/
+│   │   ├── resume/
+│   │   ├── router/
 │   │   ├── services/
-│   │   ├── schemas/
-│   │   ├── prompts/
+│   │   ├── tools/
 │   │   └── main.py
 │   │
-│   └── requirements.txt
+│   ├── screenshots/
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── README.md
+│   ├── package-lock.json
+│   ├── requirements.txt
+│   ├── test.py
+│   └── test_gemini.py
 │
 ├── frontend/
 │   ├── src/
+│   │   ├── assets/
 │   │   ├── components/
 │   │   ├── context/
 │   │   ├── firebase/
 │   │   ├── pages/
 │   │   ├── services/
 │   │   ├── utils/
-│   │   └── App.jsx
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
 │   │
+│   ├── docs/
 │   ├── public/
-│   └── 
+│   ├── screenshots/
+│   ├── .gitignore
+│   ├── README.md
+│   └── ...
 │
 ├── docs/
-├── screenshots/
+├── specs/
+├── .gitignore
+├── LICENSE
+├── Procfile
 ├── README.md
-└── LICENSE
+├── backend_structure.txt
+├── frontend_structure.txt
+├── package-lock.json
+├── railway.json
+└── runtime.txt
 ```
 
 ## 🚀 Future Scope
