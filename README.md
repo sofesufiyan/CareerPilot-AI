@@ -303,6 +303,22 @@ CareerPilot-AI/
 - ☁️ **Cloud Deployment** — Frontend deployed on Vercel and backend deployed on Render.
 
 ---
+
+## 📊 Project Status
+
+| Component | Status |
+|-----------|--------|
+| 🎨 Frontend | ✅ Completed |
+| ⚡ FastAPI Backend | ✅ Completed |
+| 🤖 Gemini AI Integration | ✅ Completed |
+| 🔐 Firebase Authentication | ✅ Completed |
+| 📄 Resume Analysis | ✅ Completed |
+| 🎯 Skill Gap Analysis | ✅ Completed |
+| 🛣️ Learning Roadmap | ✅ Completed |
+| 🎤 AI Interview Coach | ✅ Completed |
+| ☁️ Cloud Deployment | ✅ Live |
+
+---
 ## 🚀 Future Scope
 
 CareerPilot AI will continue to evolve with more intelligent career assistance features, including:
