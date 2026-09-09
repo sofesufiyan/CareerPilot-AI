@@ -362,9 +362,9 @@ CareerPilot AI will continue to evolve with more intelligent career assistance f
 
 ### 🔗 Connect With Me
 
-- 💼 LinkedIn: Mohammed Sufiyan
-- 🐙 GitHub: sofesufiyan
-- 📧 Email: Sofesufiyan2799@gmail.com
+- 💼 LinkedIn: [Mohammed Sufiyan](https://www.linkedin.com/in/mohammed-sufiyan-378696290)
+- 🐙 GitHub: [sofesufiyan](https://github.com/sofesufiyan)
+- 📧 Email: [Sofesufiyan2799@gmail.com](mailto:Sofesufiyan2799@gmail.com)
 
 ---
 
