@@ -303,7 +303,23 @@ CareerPilot-AI/
 - ☁️ **Cloud Deployment** — Frontend deployed on Vercel and backend deployed on Render.
 
 ---
+---
 
+## 🔄 How It Works
+
+1. 🔐 **Sign Up / Sign In**  
+   Users securely authenticate using Firebase Authentication.
+
+2. 📄 **Upload Resume**  
+   Upload a PDF resume for AI-powered analysis.
+
+3. 🤖 **AI Analysis**  
+   CareerPilot AI analyzes the resume using Google Gemini AI to identify skills, ATS score, skill gaps, and career opportunities.
+
+4. 🎯 **Personalized Guidance**  
+   Users receive career recommendations, learning roadmaps, AI mentoring, and interview preparation.
+
+---
 ## 📊 Project Status
 
 | Component | Status |
