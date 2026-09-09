@@ -288,7 +288,21 @@ CareerPilot-AI/
 ├── railway.json
 └── runtime.txt
 ```
+---
 
+## 💡 Project Highlights
+
+- 🤖 **AI-Powered Career Guidance** — Provides personalized career recommendations using Google Gemini AI.
+- 📄 **Resume Intelligence** — Analyzes uploaded resumes and generates ATS scoring, skills, and improvement suggestions.
+- 🎯 **Skill Gap Analysis** — Identifies missing skills and highlights areas for improvement.
+- 🛣️ **Personalized Learning Roadmaps** — Generates structured learning paths based on the user's career goals and skills.
+- 💬 **AI Career Mentor** — Provides interactive AI-powered career guidance and resume-based assistance.
+- 🎤 **AI Interview Coach** — Supports configurable mock interviews for technical and behavioral preparation.
+- 🔐 **Secure Authentication** — Uses Firebase Authentication with Email/Password and Google OAuth.
+- ⚡ **Full-Stack Architecture** — React frontend connected to a FastAPI backend and Gemini AI services.
+- ☁️ **Cloud Deployment** — Frontend deployed on Vercel and backend deployed on Render.
+
+---
 ## 🚀 Future Scope
 
 CareerPilot AI will continue to evolve with more intelligent career assistance features, including:
