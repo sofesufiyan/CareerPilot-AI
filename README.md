@@ -116,7 +116,7 @@ The application is designed to help students and professionals make informed car
 
 ## 🏠 Landing Page
 
-![Login Page](frontend/screenshots/login-page.png)
+![Landing Page](frontend/screenshots/landing-page.png)
 ---
 
 ## 🔐 Login Page
