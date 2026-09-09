@@ -349,3 +349,23 @@ CareerPilot AI will continue to evolve with more intelligent career assistance f
 - 📊 Advanced Analytics Dashboard
 - 📱 Mobile Application (Android & iOS)
 - 🤝 Multi-Agent Collaboration for Career Planning
+
+ ---
+
+## 👨‍💻 Author
+
+### Mohammed Sufiyan
+
+🎓 B.Tech Artificial Intelligence & Machine Learning Student  
+🤖 AI/ML & Full-Stack AI Developer  
+🚀 Interested in Generative AI, AI Agents and Intelligent Applications
+
+### 🔗 Connect With Me
+
+- 💼 LinkedIn: Mohammed Sufiyan
+- 🐙 GitHub: sofesufiyan
+- 📧 Email: Sofesufiyan2799@gmail.com
+
+---
+
+⭐ If you find CareerPilot AI interesting, consider giving the repository a star! 
