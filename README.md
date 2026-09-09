@@ -75,7 +75,7 @@ The application is designed to help students and professionals make informed car
 
 ### Deployment
 - Vercel (Frontend)
-- - FastAPI Backend — Render (Render/Railway or your chosen platform)
+- FastAPI Backend — Render
 
 ### Version Control
 - Git
