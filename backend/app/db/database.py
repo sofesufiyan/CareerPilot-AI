@@ -8,8 +8,12 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger("uvicorn.error")
 
 # Place sqlite database inside a persistent local data directory
-DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+DB_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    "data"
+)
 DB_PATH = os.path.join(DB_DIR, "careerpilot.db")
+
 
 def init_db() -> None:
     """
@@ -17,9 +21,10 @@ def init_db() -> None:
     Safe to call multiple times (creates only if missing).
     """
     os.makedirs(DB_DIR, exist_ok=True)
+
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         cursor = conn.cursor()
-        
+
         # Extended table schema to store original resume_text for future AI re-analysis
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS resume_analyses (
@@ -33,10 +38,12 @@ def init_db() -> None:
                 data_json TEXT NOT NULL
             )
         """)
-        
+
         # Create index on uid for optimized retrieval queries
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_uid ON resume_analyses(uid)")
-        
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_uid ON resume_analyses(uid)"
+        )
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS interview_sessions (
                 id TEXT PRIMARY KEY,
@@ -49,8 +56,13 @@ def init_db() -> None:
                 data_json TEXT NOT NULL
             )
         """)
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_uid ON interview_sessions(uid)")
+
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_interview_uid ON interview_sessions(uid)"
+        )
+
         conn.commit()
+
 
 def save_resume_analysis(
     uid: str,
@@ -64,18 +76,27 @@ def save_resume_analysis(
     """
     Saves or updates a resume analysis record in the database using context managers.
     Generates a UUID if no analysis_id is provided.
-    
+
     Returns:
         str: The saved analysis ID.
     """
     if not analysis_id:
         analysis_id = str(uuid.uuid4())
-        
+
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         cursor = conn.cursor()
+
         cursor.execute(
             """
-            INSERT INTO resume_analyses (id, uid, filename, resume_score, ats_score, resume_text, data_json)
+            INSERT INTO resume_analyses (
+                id,
+                uid,
+                filename,
+                resume_score,
+                ats_score,
+                resume_text,
+                data_json
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 filename=excluded.filename,
@@ -84,11 +105,21 @@ def save_resume_analysis(
                 resume_text=excluded.resume_text,
                 data_json=excluded.data_json
             """,
-            (analysis_id, uid, filename, resume_score, ats_score, resume_text, json.dumps(data))
+            (
+                analysis_id,
+                uid,
+                filename,
+                resume_score,
+                ats_score,
+                resume_text,
+                json.dumps(data)
+            )
         )
+
         conn.commit()
-        
+
     return analysis_id
+
 
 def get_resume_history(uid: str) -> List[Dict[str, Any]]:
     """
@@ -96,61 +127,99 @@ def get_resume_history(uid: str) -> List[Dict[str, Any]]:
     sorted by upload time in descending order.
     """
     results = []
+
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
+
         cursor.execute(
             """
-            SELECT id, uid, filename, uploaded_at, resume_score, ats_score, resume_text, data_json 
-            FROM resume_analyses 
-            WHERE uid = ? 
+            SELECT
+                id,
+                uid,
+                filename,
+                uploaded_at,
+                resume_score,
+                ats_score,
+                resume_text,
+                data_json
+            FROM resume_analyses
+            WHERE uid = ?
             ORDER BY uploaded_at DESC
             """,
             (uid,)
         )
+
         rows = cursor.fetchall()
+
         for row in rows:
             item = dict(row)
+
             try:
                 item["data"] = json.loads(item["data_json"])
             except Exception as e:
-                logger.error(f"Failed to parse data_json for analysis {item.get('id')}: {e}")
+                logger.error(
+                    f"Failed to parse data_json for analysis "
+                    f"{item.get('id')}: {e}"
+                )
                 item["data"] = {}
+
             del item["data_json"]
+
             results.append(item)
-            
+
     return results
 
-def get_resume_analysis(analysis_id: str) -> Optional[Dict[str, Any]]:
+
+def get_resume_analysis(
+    analysis_id: str
+) -> Optional[Dict[str, Any]]:
     """
     Retrieves a specific resume analysis record by its primary key ID.
     """
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
+
         cursor.execute(
             """
-            SELECT id, uid, filename, uploaded_at, resume_score, ats_score, resume_text, data_json 
-            FROM resume_analyses 
+            SELECT
+                id,
+                uid,
+                filename,
+                uploaded_at,
+                resume_score,
+                ats_score,
+                resume_text,
+                data_json
+            FROM resume_analyses
             WHERE id = ?
             """,
             (analysis_id,)
         )
+
         row = cursor.fetchone()
+
         if not row:
             return None
-            
+
         item = dict(row)
+
         try:
             item["data"] = json.loads(item["data_json"])
         except Exception as e:
-            logger.error(f"Failed to parse data_json for analysis {analysis_id}: {e}")
+            logger.error(
+                f"Failed to parse data_json for analysis "
+                f"{analysis_id}: {e}"
+            )
             item["data"] = {}
+
+        # Remove the raw JSON field after parsing.
+        # This line intentionally appears only once.
         del item["data_json"]
-        
-        del item["data_json"]
-        
+
     return item
+
 
 def save_interview_session(
     uid: str,
@@ -160,16 +229,32 @@ def save_interview_session(
     data: Dict[str, Any],
     session_id: Optional[str] = None
 ) -> str:
+    """
+    Saves or updates an interview session.
+    Generates a UUID if no session_id is provided.
+
+    Returns:
+        str: The saved interview session ID.
+    """
     if not session_id:
         session_id = str(uuid.uuid4())
-        
+
     average_score = data.get("average_score")
-        
+
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         cursor = conn.cursor()
+
         cursor.execute(
             """
-            INSERT INTO interview_sessions (id, uid, role, difficulty, type, average_score, data_json)
+            INSERT INTO interview_sessions (
+                id,
+                uid,
+                role,
+                difficulty,
+                type,
+                average_score,
+                data_json
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 role=excluded.role,
@@ -178,35 +263,69 @@ def save_interview_session(
                 average_score=excluded.average_score,
                 data_json=excluded.data_json
             """,
-            (session_id, uid, role, difficulty, interview_type, average_score, json.dumps(data))
+            (
+                session_id,
+                uid,
+                role,
+                difficulty,
+                interview_type,
+                average_score,
+                json.dumps(data)
+            )
         )
+
         conn.commit()
-        
+
     return session_id
 
-def get_interview_history(uid: str) -> List[Dict[str, Any]]:
+
+def get_interview_history(
+    uid: str
+) -> List[Dict[str, Any]]:
+    """
+    Retrieves all interview sessions for a specific Firebase user UID,
+    sorted by creation time in descending order.
+    """
     results = []
+
     with sqlite3.connect(DB_PATH, check_same_thread=False) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
+
         cursor.execute(
             """
-            SELECT id, uid, role, difficulty, type, created_at, average_score, data_json 
-            FROM interview_sessions 
-            WHERE uid = ? 
+            SELECT
+                id,
+                uid,
+                role,
+                difficulty,
+                type,
+                created_at,
+                average_score,
+                data_json
+            FROM interview_sessions
+            WHERE uid = ?
             ORDER BY created_at DESC
             """,
             (uid,)
         )
+
         rows = cursor.fetchall()
+
         for row in rows:
             item = dict(row)
+
             try:
                 item["data"] = json.loads(item["data_json"])
             except Exception as e:
-                logger.error(f"Failed to parse data_json for interview {item.get('id')}: {e}")
+                logger.error(
+                    f"Failed to parse data_json for interview "
+                    f"{item.get('id')}: {e}"
+                )
                 item["data"] = {}
+
             del item["data_json"]
+
             results.append(item)
-            
+
     return results
