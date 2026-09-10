@@ -1,6 +1,15 @@
-from fastapi import APIRouter, UploadFile, File, Depends, Request, HTTPException, status
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    File,
+    Depends,
+    Request,
+    HTTPException,
+    status,
+)
 import os
 import logging
+import tempfile
 from typing import List
 
 from app.models.schemas import (
@@ -8,10 +17,12 @@ from app.models.schemas import (
     CareerResponse,
     ResumeResponse,
 )
+
 from app.services.career_service import (
     get_career_advice,
     review_resume,
 )
+
 from app.services.pdf_service import extract_text_from_pdf
 from app.tools.agent_logger import get_logs
 from app.db.database import get_resume_history
@@ -31,12 +42,20 @@ router = APIRouter()
 def career_advice(
     request: Request,
     body: CareerRequest,
-    user: UserSession = Depends(get_current_user)
+    user: UserSession = Depends(get_current_user),
 ):
     active_user = request.state.user
-    logger.info(f"Route Access: '/career-advice' requested by User UID: {active_user.uid} ({active_user.email})")
 
-    answer = get_career_advice(body.question, active_user.uid)
+    logger.info(
+        f"Route Access: '/career-advice' requested by "
+        f"User UID: {active_user.uid} ({active_user.email})"
+    )
+
+    answer = get_career_advice(
+        body.question,
+        active_user.uid,
+    )
+
     return CareerResponse(answer=answer)
 
 
@@ -47,34 +66,105 @@ def career_advice(
 async def resume_upload(
     request: Request,
     file: UploadFile = File(...),
-    user: UserSession = Depends(get_current_user)
+    user: UserSession = Depends(get_current_user),
 ):
     active_user = request.state.user
-    logger.info(f"Route Access: '/resume-upload' initiated by User UID: {active_user.uid} ({active_user.email})")
 
-    temp_path = f"temp_{file.filename}"
+    logger.info(
+        f"Route Access: '/resume-upload' initiated by "
+        f"User UID: {active_user.uid} ({active_user.email})"
+    )
+
+    # Validate uploaded file type
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No file was provided.",
+        )
+
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF resume files are supported.",
+        )
+
+    temp_path = None
 
     try:
-        # Save uploaded PDF temporarily
-        with open(temp_path, "wb") as buffer:
-            buffer.write(await file.read())
+        # Create a secure temporary file.
+        # The original filename is NOT used as a filesystem path.
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".pdf",
+        ) as temp_file:
+            temp_path = temp_file.name
+
+            # Save uploaded PDF temporarily
+            while True:
+                chunk = await file.read(1024 * 1024)
+
+                if not chunk:
+                    break
+
+                temp_file.write(chunk)
 
         # Extract text from PDF
         resume_text = extract_text_from_pdf(temp_path)
 
+    except Exception as e:
+        logger.exception(
+            f"Resume processing failed for user "
+            f"{active_user.uid}: {e}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process the uploaded resume.",
+        )
+
     finally:
         # Always remove temporary file
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError as e:
+                logger.warning(
+                    f"Failed to remove temporary resume file "
+                    f"{temp_path}: {e}"
+                )
+
+        # Close the uploaded file
+        await file.close()
 
     # Trigger structured resume review with database persistence
-    analysis = review_resume(resume_text, active_user.uid, file.filename)
+    try:
+        analysis = review_resume(
+            resume_text,
+            active_user.uid,
+            file.filename,
+        )
+
+    except Exception as e:
+        logger.exception(
+            f"Resume analysis failed for user "
+            f"{active_user.uid}: {e}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to analyze the uploaded resume.",
+        )
 
     # Elevate processing errors as HTTP exceptions
     if "error" in analysis:
+        logger.error(
+            f"Resume analysis returned an error for user "
+            f"{active_user.uid}: {analysis['error']}"
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=analysis["error"]
+            detail=analysis["error"],
         )
 
     return ResumeResponse(**analysis)
@@ -83,13 +173,20 @@ async def resume_upload(
 # ----------------------------------------
 # Resume History Endpoint (Guarded)
 # ----------------------------------------
-@router.get("/resume-history", response_model=List[ResumeResponse])
+@router.get(
+    "/resume-history",
+    response_model=List[ResumeResponse],
+)
 def resume_history(
     request: Request,
-    user: UserSession = Depends(get_current_user)
+    user: UserSession = Depends(get_current_user),
 ):
     active_user = request.state.user
-    logger.info(f"Route Access: '/resume-history' requested by User UID: {active_user.uid}")
+
+    logger.info(
+        f"Route Access: '/resume-history' requested by "
+        f"User UID: {active_user.uid}"
+    )
 
     history = get_resume_history(active_user.uid)
 
@@ -115,13 +212,25 @@ def resume_history(
             "schema_version": data.get("schema_version", "1.0"),
             "roadmap": data.get("roadmap", []),
             "recommended_roles": data.get("recommended_roles", []),
-            "recommended_certifications": data.get("recommended_certifications", []),
-            "learning_resources": data.get("learning_resources", []),
-            "recommended_projects": data.get("recommended_projects", []),
+            "recommended_certifications": data.get(
+                "recommended_certifications",
+                [],
+            ),
+            "learning_resources": data.get(
+                "learning_resources",
+                [],
+            ),
+            "recommended_projects": data.get(
+                "recommended_projects",
+                [],
+            ),
         }
 
         try:
-            results.append(ResumeResponse(**flat_analysis))
+            results.append(
+                ResumeResponse(**flat_analysis)
+            )
+
         except Exception as e:
             logger.error(
                 f"Skipping invalid resume history record "
@@ -138,10 +247,23 @@ def resume_history(
 @router.get("/agent-logs")
 def agent_logs(
     request: Request,
-    user: UserSession = Depends(get_current_user)
+    user: UserSession = Depends(get_current_user),
 ):
     active_user = request.state.user
-    logger.info(f"Route Access: '/agent-logs' requested by User UID: {active_user.uid} ({active_user.email})")
+
+    logger.info(
+        f"Route Access: '/agent-logs' requested by "
+        f"User UID: {active_user.uid} ({active_user.email})"
+    )
+
+    # NOTE:
+    # get_logs() currently uses a global in-memory log list.
+    # The endpoint remains guarded by Firebase authentication,
+    # but logs are not yet isolated per user.
+    #
+    # This will be addressed separately after checking all
+    # agent_logger.add() usages so we don't break existing
+    # CareerPilot AI functionality.
 
     return {
         "logs": get_logs()
