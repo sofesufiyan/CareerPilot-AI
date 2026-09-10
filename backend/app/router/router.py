@@ -38,34 +38,20 @@ def choose_agent(question: str) -> str:
         return "resume"
 
     # ==========================================
-    # Learning Planner
-    # ==========================================
-    roadmap_keywords = [
-        "roadmap",
-        "plan",
-        "learning path",
-        "study plan",
-        "learning roadmap",
-        "career roadmap",
-        "how to learn",
-        "how should i start",
-    ]
-
-    if any(keyword in question for keyword in roadmap_keywords):
-        print("🗺️ Selected Agent: Learning Planner")
-        return "roadmap"
-
-    # ==========================================
     # Interview Coach
+    # Checked before roadmap because words like
+    # "plan" can also appear in interview questions.
     # ==========================================
     interview_keywords = [
         "interview",
         "mock interview",
         "technical interview",
         "hr interview",
-        "placement",
+        "placement interview",
         "interview questions",
         "prepare for interview",
+        "interview preparation",
+        "interview prep",
     ]
 
     if any(keyword in question for keyword in interview_keywords):
@@ -82,13 +68,37 @@ def choose_agent(question: str) -> str:
         "analyze my skills",
         "analyse my skills",
         "improve my skills",
-        "what skills",
         "skill assessment",
+        "skills i need",
+        "skills do i need",
+        "skills should i learn",
+        "what skills should i learn",
     ]
 
     if any(keyword in question for keyword in skill_keywords):
         print("📊 Selected Agent: Skill Gap Advisor")
         return "skillgap"
+
+    # ==========================================
+    # Learning Planner
+    # ==========================================
+    roadmap_keywords = [
+        "roadmap",
+        "learning path",
+        "study plan",
+        "learning roadmap",
+        "career roadmap",
+        "learning plan",
+        "how to learn",
+        "how should i start",
+        "what should i learn first",
+        "learning schedule",
+        "study roadmap",
+    ]
+
+    if any(keyword in question for keyword in roadmap_keywords):
+        print("🗺️ Selected Agent: Learning Planner")
+        return "roadmap"
 
     # ==========================================
     # Career Mentor (Default)
