@@ -75,7 +75,7 @@ async def resume_upload(
         f"User UID: {active_user.uid} ({active_user.email})"
     )
 
-    # Validate uploaded file type
+    # Validate uploaded file
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -92,14 +92,14 @@ async def resume_upload(
 
     try:
         # Create a secure temporary file.
-        # The original filename is NOT used as a filesystem path.
+        # The original filename is not used as a filesystem path.
         with tempfile.NamedTemporaryFile(
             delete=False,
             suffix=".pdf",
         ) as temp_file:
             temp_path = temp_file.name
 
-            # Save uploaded PDF temporarily
+            # Save uploaded PDF in chunks
             while True:
                 chunk = await file.read(1024 * 1024)
 
@@ -133,10 +133,10 @@ async def resume_upload(
                     f"{temp_path}: {e}"
                 )
 
-        # Close the uploaded file
+        # Close uploaded file
         await file.close()
 
-    # Trigger structured resume review with database persistence
+    # Trigger structured resume review
     try:
         analysis = review_resume(
             resume_text,
@@ -155,7 +155,7 @@ async def resume_upload(
             detail="Failed to analyze the uploaded resume.",
         )
 
-    # Elevate processing errors as HTTP exceptions
+    # Handle processing errors returned by the service
     if "error" in analysis:
         logger.error(
             f"Resume analysis returned an error for user "
@@ -200,18 +200,52 @@ def resume_history(
             "filename": item.get("filename"),
             "resume_score": item.get("resume_score"),
             "ats_score": item.get("ats_score"),
-            "technical_skills": data.get("technical_skills", []),
-            "soft_skills": data.get("soft_skills", []),
-            "strengths": data.get("strengths", []),
-            "weaknesses": data.get("weaknesses", []),
-            "missing_skills": data.get("missing_skills", []),
-            "suggestions": data.get("suggestions", []),
-            "ai_explanation": data.get("ai_explanation", ""),
-            "confidence_score": data.get("confidence_score"),
-            "generated_at": data.get("generated_at"),
-            "schema_version": data.get("schema_version", "1.0"),
-            "roadmap": data.get("roadmap", []),
-            "recommended_roles": data.get("recommended_roles", []),
+            "technical_skills": data.get(
+                "technical_skills",
+                [],
+            ),
+            "soft_skills": data.get(
+                "soft_skills",
+                [],
+            ),
+            "strengths": data.get(
+                "strengths",
+                [],
+            ),
+            "weaknesses": data.get(
+                "weaknesses",
+                [],
+            ),
+            "missing_skills": data.get(
+                "missing_skills",
+                [],
+            ),
+            "suggestions": data.get(
+                "suggestions",
+                [],
+            ),
+            "ai_explanation": data.get(
+                "ai_explanation",
+                "",
+            ),
+            "confidence_score": data.get(
+                "confidence_score"
+            ),
+            "generated_at": data.get(
+                "generated_at"
+            ),
+            "schema_version": data.get(
+                "schema_version",
+                "1.0",
+            ),
+            "roadmap": data.get(
+                "roadmap",
+                [],
+            ),
+            "recommended_roles": data.get(
+                "recommended_roles",
+                [],
+            ),
             "recommended_certifications": data.get(
                 "recommended_certifications",
                 [],
@@ -256,15 +290,7 @@ def agent_logs(
         f"User UID: {active_user.uid} ({active_user.email})"
     )
 
-    # NOTE:
-    # get_logs() currently uses a global in-memory log list.
-    # The endpoint remains guarded by Firebase authentication,
-    # but logs are not yet isolated per user.
-    #
-    # This will be addressed separately after checking all
-    # agent_logger.add() usages so we don't break existing
-    # CareerPilot AI functionality.
-
+    # Return only logs belonging to the authenticated user.
     return {
-        "logs": get_logs()
+        "logs": get_logs(active_user.uid)
     }
